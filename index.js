@@ -1,9 +1,11 @@
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
-const mongoose = require("mongoose");
 const socketIo = require("socket.io");
+const authRouter = require("./route/authroute");
+const msgRouter = require("./route/msgroute");
 const { db_connect } = require("./db connect/mangodb");
+
 require("dotenv").config();
 
 const app = express();
@@ -20,8 +22,22 @@ db_connect();
 app.use(express.json());
 app.use(cors());
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+
+
+/* setting up routes in the Express application. */
+app.use("/api/user/", authRouter);
+app.use("/api/message/", msgRouter);
+
+const PORT = 4000;
+
+
+app.get("/", (_req, res) => {
+  res.json({ message: `your site url is http://localhost:${PORT}/` })
 });
 
 
+
+app.listen(PORT, () => {
+
+  console.log(`Example app listening at http://localhost:${PORT}`);
+});
