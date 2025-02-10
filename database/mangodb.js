@@ -5,11 +5,12 @@ const { default: mongoose } = require("mongoose");
  * success message if the connection is successful.
  */
 const dbconnect = () => {
-  try {
-    mongoose.connect(process.env.MONGODB_URI);
-    console.log("Database Connected Successfully");
-  } catch (error) {
-    console.log("Database error");
-  }
+    try {
+        mongoose.connect(process.env.MANGODB_URL);
+        console.log("Database Connected Successfully");
+    } catch (error) {
+        console.log("Database error");
+    }
 };
 module.exports = { dbconnect };
+
