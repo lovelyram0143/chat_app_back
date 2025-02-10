@@ -4,7 +4,13 @@ const cors = require("cors");
 const socketIo = require("socket.io");
 const authRouter = require("./route/authroute");
 const msgRouter = require("./route/msgroute");
-const { db_connect } = require("./db connect/mangodb");
+
+const morgan = require("morgan");
+const { dbconnect } = require("./db connect/mangodb");
+
+
+dbconnect()
+
 
 require("dotenv").config();
 
@@ -17,9 +23,12 @@ const io = socketIo(server, {
   },
 });
 
-db_connect();
+
+app.use(morgan('dev'))
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Handle form data
+
 app.use(cors());
 
 

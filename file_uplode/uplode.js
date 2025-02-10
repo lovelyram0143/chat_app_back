@@ -1,20 +1,21 @@
 const asyncHandler = require("express-async-handler");
 
-const upload = require('../config/multer');
+
 //
 // Upload a file to Cloudinary
 //
-const file = upload.single('file')
+
 const uploadFile = asyncHandler(
   async (req, res) => {
-    const fileUrl = req.file ? req.file.path : null;
-    try {
-      if (!fileUrl) return res.status(400).json({ message: "No file uploaded" });
-
-      res.status(201).json({ fileUrl });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
     }
+    res.status(200).json({
+      message: "File uploaded successfully",
+      fileUrl: req.file.path,
+      senderId: req.query.senderId,
+      receiverId: req.query.receiverId,
+    });
   })
 
-module.exports = { uploadFile, file };
+module.exports = { uploadFile };
