@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const mongoose = require('mongoose')
 const MessageSchema = require('./models/message')
 const { dbconnect } = require("./database/mangodb");
 const dotenv = require("dotenv");
@@ -53,8 +54,11 @@ io.on('connection', (socket) => {
         .sort({ createdAt: -1 }) // Sort by creation date in descending order
         .limit(1);
 
-      console.log('newMessage', receiverIdStr._id);
+      
 
+      const senderSocket = onlineUsers.find(
+        (user) => user.userId === senderIdStr._id
+      )?.socketId;
       const receiverSocket = onlineUsers.find(
         (user) => user.userId === receiverIdStr._id
       )?.socketId;
@@ -66,6 +70,7 @@ io.on('connection', (socket) => {
 
 
         io.to(receiverSocket).emit('receiveMessage', finalmsg);
+        io.to(senderSocket).emit('messageRead', { messageId: data._id, receiverId: data.receiverId, senderId: data.senderId });
       } else {
         console.log('🚫 Receiver Not Online');
       }
@@ -73,6 +78,32 @@ io.on('connection', (socket) => {
       console.error('❌ Error sending message:', error);
     }
   });
+  socket.on("markAsRead", async ({ messageId }) => {
+    try {
+      dbconnect();
+      const message = await MessageSchema.findById(messageId);
+
+      if (!message || message.isRead) return;
+
+      message.isRead = true;
+      await message.save();
+
+      console.log("📨 Marking message as read:", message);
+
+      const senderSocket = onlineUsers.find((user) =>
+        new mongoose.Types.ObjectId(user.userId).equals(message.senderId)
+      )?.socketId
+     
+      if (senderSocket) {
+        console.log('sender socket', senderSocket)
+        io.to(senderSocket).emit('messageRead', { messageId, receiverId: message.receiverId._id, senderId: message.senderId._id });
+      }
+    } catch (error) {
+      console.error("❌ Error marking message as read:", error);
+    }
+  });
+
+
 
   // Handle disconnect
   socket.on('disconnect', () => {
