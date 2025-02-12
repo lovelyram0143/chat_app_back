@@ -1,5 +1,5 @@
 const mongoose = require("mongoose"); // Erase if already required
-require("./user"); // Ensure User model is loaded before MessageSchema
+
 
 // Message schema with ObjectId references
 const UserSchema = new mongoose.Schema(
@@ -9,6 +9,8 @@ const UserSchema = new mongoose.Schema(
         password: { type: String, required: true },
         friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        isOnline: { type: Boolean, default: false },
+        lastSeen: { type: Date, default: null },
     },
     { timestamps: true }
 );

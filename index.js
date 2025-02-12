@@ -3,6 +3,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require('mongoose')
 const MessageSchema = require('./models/message')
+const User = require('./models/user')
+
 const { dbconnect } = require("./database/mangodb");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -24,11 +26,27 @@ io.on('connection', (socket) => {
   console.log('🔵 User Connected:', socket.id);
 
   // Register user as online
-  socket.on('userOnline', (userId) => {
+  socket.on('userOnline', async (userId) => {
     if (!onlineUsers.find((user) => user.userId === userId)) {
       onlineUsers.push({ userId, socketId: socket.id });
     }
     console.log('✅ Online Users:', onlineUsers);
+    try {
+      dbconnect()
+      // Update user's status to online
+      const user = await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: new Date() });
+
+
+
+      lastSeen = user.lastSeen
+      // Notify others that the user is online
+      io.emit("userStatusUpdate",
+        // { userId, isOnline: true , lastSeen:lastSeen }
+
+      );
+    } catch {
+      console.log('Error updating user status')
+    }
   });
 
   // Send message event
@@ -54,7 +72,7 @@ io.on('connection', (socket) => {
         .sort({ createdAt: -1 }) // Sort by creation date in descending order
         .limit(1);
 
-      
+
 
       const senderSocket = onlineUsers.find(
         (user) => user.userId === senderIdStr._id
@@ -93,7 +111,7 @@ io.on('connection', (socket) => {
       const senderSocket = onlineUsers.find((user) =>
         new mongoose.Types.ObjectId(user.userId).equals(message.senderId)
       )?.socketId
-     
+
       if (senderSocket) {
         console.log('sender socket', senderSocket)
         io.to(senderSocket).emit('messageRead', { messageId, receiverId: message.receiverId._id, senderId: message.senderId._id });
@@ -106,10 +124,30 @@ io.on('connection', (socket) => {
 
 
   // Handle disconnect
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log('🔴 User Disconnected:', socket.id);
-    onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
-    console.log('Updated Online Users:', onlineUsers);
+    const userid = onlineUsers.find((user) => user.socketId == socket.id)
+
+
+
+    if (userid) {
+      // onlineUsers.delete(userId);
+      console.log("🔴 User Offline:", userid);
+      onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
+
+      console.log('Updated Online Users:', onlineUsers);
+      const user = userid.userId
+
+
+      try {
+        await User.findByIdAndUpdate(userid.userId, { isOnline: false, lastSeen: new Date() });
+
+        // Notify others that the user is offline
+        io.emit("userStatusUpdate");
+      } catch (error) {
+        console.error("❌ Error updating last seen:", error);
+      }
+    }
   });
 });
 
