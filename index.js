@@ -74,6 +74,7 @@ io.on('connection', (socket) => {
 
 
 
+
       const senderSocket = onlineUsers.find(
         (user) => user.userId === senderIdStr._id
       )?.socketId;
@@ -85,10 +86,11 @@ io.on('connection', (socket) => {
         console.log('receiverId', receiverSocket);
         console.log('📨 Sending to Receiver:', receiverSocket);
         console.log("Final message:", finalmsg);
+        
 
 
         io.to(receiverSocket).emit('receiveMessage', finalmsg);
-        io.to(senderSocket).emit('messageRead', { messageId: data._id, receiverId: data.receiverId, senderId: data.senderId });
+        io.to(senderSocket).emit('messageRead', { messageId: data._id,  receiverId: data.receiverId, senderId: data.senderId, isReadAt: new Date()});
       } else {
         console.log('🚫 Receiver Not Online');
       }
@@ -104,6 +106,7 @@ io.on('connection', (socket) => {
       if (!message || message.isRead) return;
 
       message.isRead = true;
+      message.isReadAt = new Date()
       await message.save();
 
       console.log("📨 Marking message as read:", message);
@@ -114,7 +117,7 @@ io.on('connection', (socket) => {
 
       if (senderSocket) {
         console.log('sender socket', senderSocket)
-        io.to(senderSocket).emit('messageRead', { messageId, receiverId: message.receiverId._id, senderId: message.senderId._id });
+        io.to(senderSocket).emit('messageRead', { messageId, receiverId: message.receiverId._id, senderId: message.senderId._id ,isReadAt:message.isReadAt });
       }
     } catch (error) {
       console.error("❌ Error marking message as read:", error);
