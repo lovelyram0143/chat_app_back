@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
       // Notify others that the user is online
       io.emit(
         'userStatusUpdate',
-        { userId, isOnline: true , lastSeen:lastSeen }
+        // { userId, isOnline: true , lastSeen:lastSeen }
       );
     } catch {
       console.log('Error updating user status');
@@ -144,7 +144,9 @@ io.on('connection', (socket) => {
         });
 
         // Notify others that the user is offline
-        io.emit('userStatusUpdate', { userId: userid.userId, isOnline: false, lastSeen: new Date() });
+        io.emit('userStatusUpdate', 
+          // { userId: userid.userId, isOnline: false, lastSeen: new Date() }
+        );
       } catch (error) {
         console.error('❌ Error updating last seen:', error);
       }
