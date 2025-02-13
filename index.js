@@ -9,9 +9,10 @@ const { dbconnect } = require('./database/mangodb');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const siteurl=process.env.NODE_ENV == 'production'
-? 'https://chat-app-front-pi-flame.vercel.app'
-: 'http://localhost:3000';
+const siteurl =
+  process.env.NODE_ENV == 'production'
+    ? 'https://chat-app-front-pi-flame.vercel.app'
+    : 'http://localhost:3000';
 
 const app = express();
 const server = http.createServer(app);
@@ -45,7 +46,7 @@ io.on('connection', (socket) => {
       lastSeen = user.lastSeen;
       // Notify others that the user is online
       io.emit(
-        'userStatusUpdate',
+        'userStatusUpdate'
         // { userId, isOnline: true , lastSeen:lastSeen }
       );
     } catch {
@@ -148,7 +149,8 @@ io.on('connection', (socket) => {
         });
 
         // Notify others that the user is offline
-        io.emit('userStatusUpdate', 
+        io.emit(
+          'userStatusUpdate'
           // { userId: userid.userId, isOnline: false, lastSeen: new Date() }
         );
       } catch (error) {
