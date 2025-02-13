@@ -9,16 +9,13 @@ const { dbconnect } = require('./database/mangodb');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const siteurl =
-  process.env.NODE_ENV == 'production'
-    ? 'https://chat-app-front-gray.vercel.app'
-    : 'http://localhost:3000';
+
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: siteurl,
+    origin: "*",
     methods: ['GET', 'POST'],
   },
 });
