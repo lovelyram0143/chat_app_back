@@ -11,7 +11,7 @@ dotenv.config();
 
 const siteurl =
   process.env.NODE_ENV == 'production'
-    ? 'https://chat-app-front-pi-flame.vercel.app'
+    ? 'https://chat-app-front-gray.vercel.app'
     : 'http://localhost:3000';
 
 const app = express();
