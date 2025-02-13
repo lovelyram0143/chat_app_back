@@ -86,11 +86,8 @@ io.on('connection', (socket) => {
         console.log('receiverId', receiverSocket);
         console.log('📨 Sending to Receiver:', receiverSocket);
         console.log("Final message:", finalmsg);
-        
-
-
         io.to(receiverSocket).emit('receiveMessage', finalmsg);
-        io.to(senderSocket).emit('messageRead', { messageId: data._id,  receiverId: data.receiverId, senderId: data.senderId, isReadAt: new Date()});
+        io.to(receiverSocket).emit("unreadcount")
       } else {
         console.log('🚫 Receiver Not Online');
       }
@@ -114,10 +111,14 @@ io.on('connection', (socket) => {
       const senderSocket = onlineUsers.find((user) =>
         new mongoose.Types.ObjectId(user.userId).equals(message.senderId)
       )?.socketId
+      const receiverSocket = onlineUsers.find((user) =>
+        new mongoose.Types.ObjectId(user.userId).equals(message.receiverId)
+      )?.socketId
 
       if (senderSocket) {
         console.log('sender socket', senderSocket)
-        io.to(senderSocket).emit('messageRead', { messageId, receiverId: message.receiverId._id, senderId: message.senderId._id ,isReadAt:message.isReadAt });
+        io.to(receiverSocket).emit("unreadcount")
+        io.to(senderSocket).emit('messageRead', { messageId, receiverId: message.receiverId._id, senderId: message.senderId._id, isReadAt: message.isReadAt });
       }
     } catch (error) {
       console.error("❌ Error marking message as read:", error);
@@ -130,18 +131,12 @@ io.on('connection', (socket) => {
   socket.on('disconnect', async () => {
     console.log('🔴 User Disconnected:', socket.id);
     const userid = onlineUsers.find((user) => user.socketId == socket.id)
-
-
-
     if (userid) {
       // onlineUsers.delete(userId);
       console.log("🔴 User Offline:", userid);
       onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
-
       console.log('Updated Online Users:', onlineUsers);
       const user = userid.userId
-
-
       try {
         await User.findByIdAndUpdate(userid.userId, { isOnline: false, lastSeen: new Date() });
 
