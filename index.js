@@ -41,6 +41,7 @@ io.on('connection', (socket) => {
       });
 
       lastSeen = user.lastSeen;
+      io.to(onlineUsers.find(userId)?.socketId).emit('unreadcount');
       // Notify others that the user is online
       io.emit(
         'userStatusUpdate'
