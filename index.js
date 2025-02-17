@@ -10,7 +10,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 
-const siteurl= process.env.NODE_ENV == 'production'? process.env.SITE_URL : 'http://localhost:3000';
+const siteurl = process.env.NODE_ENV == 'production' ? process.env.SITE_URL : 'http://localhost:3000';
 
 
 
@@ -44,16 +44,63 @@ io.on('connection', (socket) => {
       });
 
       lastSeen = user.lastSeen;
-      // Notify others that the user is online
-      io.emit(
-        'userStatusUpdate'
-        // { userId, isOnline: true , lastSeen:lastSeen }
-      );
+      // find user friends
+      const friends = await User.find({ _id: { $in: user.friends } });
+      // console.log(friends)
+      // send online status to friends
+      friends.forEach((friend) => {
+        // fetch the friend is online
+        const friendOnline = onlineUsers.find((user) => new mongoose.Types.ObjectId(user.userId).equals(friend._id))?.socketId;
+        if (friendOnline) {
+          io.to(friendOnline).emit('userStatusUpdate');
+        }
+      });
     } catch {
       console.log('Error updating user status');
     }
   });
 
+  // Send friend request event 
+  socket.on('sendFriendRequest', async (data) => {
+    // console.log(data)
+    try {
+      const senderSocket = onlineUsers.find(
+        (user) => user.userId === data.senderId
+      )?.socketId;
+      const receiverSocket = onlineUsers.find(
+        (user) => user.userId === data.receiverId
+      )?.socketId;
+      // Check if the sender and receiver are friends
+      if (receiverSocket) {
+        io.to(receiverSocket).emit('requestUpdate');
+      } else {
+        console.log('🚫 Receiver Not Online');
+      }
+
+    } catch {
+      console.log('Error sending friend request');
+    }
+  });
+
+  // accept request evnt
+  socket.on('acceptRequest', async (friendId, userId) => {
+
+    try {
+      const receiverSocket = onlineUsers.find(
+        (user) => user.userId === friendId
+      )?.socketId;
+      const senderSocket = onlineUsers.find(
+        (user) => user.userId === userId
+      )?.socketId;
+
+
+      io.to(receiverSocket).emit('requestUpdate');
+      io.to(senderSocket).emit('requestUpdate');
+
+    } catch {
+      console.log('Error accepting friend request');
+    }
+  });
   // Send message event
   socket.on('sendMessage', async (data) => {
     try {
